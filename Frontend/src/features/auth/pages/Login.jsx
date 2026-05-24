@@ -5,7 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { motion } from "framer-motion";
 
 const Login = () => {
-  const { loading, handleLogin } = useAuth();
+  const { handleLogin } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -16,14 +16,6 @@ const Login = () => {
     await handleLogin({ email, password });
     navigate("/");
   };
-
-  if (loading) {
-    return (
-      <main>
-        <h1>Loading.......</h1>
-      </main>
-    );
-  }
 
   return (
     <main className="auth-page">
