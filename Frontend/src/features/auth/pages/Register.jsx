@@ -49,8 +49,17 @@ const Register = () => {
         </div>
       </section>
 
-      <section className="auth-form-section">
+      <motion.section
+        className="auth-form-section"
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="form-container">
+          <div className="brand">
+            <div className="brand-dot"></div>
+            <span>Interview AI</span>
+          </div>
           <h1>Register</h1>
 
           <form onSubmit={handleSubmit}>
@@ -88,11 +97,12 @@ const Register = () => {
           </form>
 
           <p>
-            Don't have an account?
+            Already have an account?
             <Link to="/login"> Login</Link>
           </p>
+          <p className="footer-text">Powered by Generative AI</p>
         </div>
-      </section>
+      </motion.section>
     </main>
   );
 };
