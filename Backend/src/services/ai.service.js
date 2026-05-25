@@ -1,180 +1,203 @@
-const { GoogleGenAI } = require("@google/genai");
-const { z } = require("zod");
-const { zodToJsonSchema } = require("zod-to-json-schema");
-const puppeteer = require("puppeteer");
+const Groq = require("groq-sdk")
+const { z } = require("zod")
+const puppeteer = require("puppeteer")
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_GENAI_API_KEY,
-});
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY
+})
+
+/* ---------------- INTERVIEW REPORT SCHEMA ---------------- */
 
 const interviewReportSchema = z.object({
-  matchScore: z
-    .number()
-    .describe(
-      "A score between 0 and 100 indicating how well the candidate's profile matches the job describe",
+    matchScore: z.number(),
+    technicalQuestions: z.array(
+        z.object({
+            question: z.string(),
+            intention: z.string(),
+            answer: z.string(),
+        })
     ),
-  technicalQuestions: z
-    .array(
-      z.object({
-        question: z
-          .string()
-          .describe("The technical question can be asked in the interview"),
-        intention: z
-          .string()
-          .describe("The intention of interviewer behind asking this question"),
-        answer: z
-          .string()
-          .describe(
-            "How to answer this question, what points to cover, what approach to take etc.",
-          ),
-      }),
-    )
-    .describe(
-      "Technical questions that can be asked in the interview along with their intention and how to answer them",
+    behavioralQuestions: z.array(
+        z.object({
+            question: z.string(),
+            intention: z.string(),
+            answer: z.string(),
+        })
     ),
-  behavioralQuestions: z
-    .array(
-      z.object({
-        question: z
-          .string()
-          .describe("The technical question can be asked in the interview"),
-        intention: z
-          .string()
-          .describe("The intention of interviewer behind asking this question"),
-        answer: z
-          .string()
-          .describe(
-            "How to answer this question, what points to cover, what approach to take etc.",
-          ),
-      }),
-    )
-    .describe(
-      "Behavioral questions that can be asked in the interview along with their intention and how to answer them",
+    skillGaps: z.array(
+        z.object({
+            skill: z.string(),
+            severity: z.enum(["low", "medium", "high"]),
+        })
     ),
-  skillGaps: z
-    .array(
-      z.object({
-        skill: z.string().describe("The skill which the candidate is lacking"),
-        severity: z
-          .enum(["low", "medium", "high"])
-          .describe(
-            "The severity of this skill gap, i.e. how important is this skill for the job and how much it can impact the candidate's chances",
-          ),
-      }),
-    )
-    .describe(
-      "List of skill gaps in the candidate's profile along with their severity",
+    preparationPlan: z.array(
+        z.object({
+            day: z.number(),
+            focus: z.string(),
+            tasks: z.array(z.string()),
+        })
     ),
-  preparationPlan: z
-    .array(
-      z.object({
-        day: z
-          .number()
-          .describe("The day number in the preparation plan, starting from 1"),
-        focus: z
-          .string()
-          .describe(
-            "The main focus of this day in the preparation plan, e.g. data structures, system design, mock interviews etc.",
-          ),
-        tasks: z
-          .array(z.string())
-          .describe(
-            "List of tasks to be done on this day to follow the preparation plan, e.g. read a specific book or article, solve a set of problems, watch a video etc.",
-          ),
-      }),
-    )
-    .describe(
-      "A day-wise preparation plan for the candidate to follow in order to prepare for the interview effectively",
-    ),
-  title: z
-    .string()
-    .describe(
-      "The title of the job for which the interview report is generated",
-    ),
-});
+    title: z.string(),
+})
+
+/* ---------------- GENERATE INTERVIEW REPORT ---------------- */
 
 async function generateInterviewReport({
-  resume,
-  selfDescription,
-  jobDescription,
+    resume,
+    selfDescription,
+    jobDescription,
 }) {
-  const prompt = `Generate an interview report for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
-`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash-lite",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: zodToJsonSchema(interviewReportSchema),
-    },
-  });
+    const prompt = `
+You are an expert technical interviewer and career coach.
 
-  return JSON.parse(response.text);
+Analyze the following candidate profile carefully.
+
+Resume:
+${resume}
+
+Self Description:
+${selfDescription}
+
+Job Description:
+${jobDescription}
+
+Generate:
+
+1. Match Score (0-100)
+2. Technical Questions with:
+   - question
+   - intention
+   - answer
+3. Behavioral Questions with:
+   - question
+   - intention
+   - answer
+4. Skill Gaps with severity
+5. 4-day preparation roadmap
+6. Job title
+
+IMPORTANT:
+Return ONLY valid JSON.
+No markdown.
+No explanation.
+No extra text.
+`
+
+    const completion = await groq.chat.completions.create({
+        model: "llama3-70b-8192",
+        messages: [
+            {
+                role: "user",
+                content: prompt,
+            },
+        ],
+        temperature: 0.7,
+    })
+
+    const response =
+        completion.choices[0].message.content
+
+    const cleanedResponse = response
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim()
+
+    return JSON.parse(cleanedResponse)
 }
+
+/* ---------------- PDF GENERATION ---------------- */
 
 async function generatePdfFromHtml(htmlContent) {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-  const page = await browser.newPage();
-  await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-  const pdfBuffer = await page.pdf({
-    format: "A4",
-    margin: {
-      top: "20mm",
-      bottom: "20mm",
-      left: "15mm",
-      right: "15mm",
-    },
-  });
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+        ],
+    })
 
-  await browser.close();
+    const page = await browser.newPage()
 
-  return pdfBuffer;
+    await page.setContent(htmlContent, {
+        waitUntil: "networkidle0",
+    })
+
+    const pdfBuffer = await page.pdf({
+        format: "A4",
+        margin: {
+            top: "20mm",
+            bottom: "20mm",
+            left: "15mm",
+            right: "15mm",
+        },
+    })
+
+    await browser.close()
+
+    return pdfBuffer
 }
 
-async function generateResumePdf({ resume, selfDescription, jobDescription }) {
-  const resumePdfSchema = z.object({
-    html: z
-      .string()
-      .describe(
-        "The HTML content of the resume which can be converted to PDF using any library like puppeteer",
-      ),
-  });
+/* ---------------- GENERATE RESUME PDF ---------------- */
 
-  const prompt = `Generate resume for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
+async function generateResumePdf({
+    resume,
+    selfDescription,
+    jobDescription,
+}) {
 
-                        the response should be a JSON object with a single field "html" which contains the HTML content of the resume which can be converted to PDF using any library like puppeteer.
-                        The resume should be tailored for the given job description and should highlight the candidate's strengths and relevant experience. The HTML content should be well-formatted and structured, making it easy to read and visually appealing.
-                        The content of resume should be not sound like it's generated by AI and should be as close as possible to a real human-written resume.
-                        you can highlight the content using some colors or different font styles but the overall design should be simple and professional.
-                        The content should be ATS friendly, i.e. it should be easily parsable by ATS systems without losing important information.
-                        The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
-                    `;
+    const prompt = `
+Create a professional ATS-friendly resume in clean HTML format.
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash-lite",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: zodToJsonSchema(resumePdfSchema),
-    },
-  });
+Candidate Resume:
+${resume}
 
-  const jsonContent = JSON.parse(response.text);
+Self Description:
+${selfDescription}
 
-  const pdfBuffer = await generatePdfFromHtml(jsonContent.html);
+Job Description:
+${jobDescription}
 
-  return pdfBuffer;
+Requirements:
+- modern professional design
+- ATS friendly
+- concise
+- realistic human-like writing
+- responsive HTML layout
+- use proper sections
+- highlight relevant skills
+- no fake experience
+
+Return ONLY raw HTML.
+`
+
+    const completion = await groq.chat.completions.create({
+        model: "llama3-70b-8192",
+        messages: [
+            {
+                role: "user",
+                content: prompt,
+            },
+        ],
+        temperature: 0.7,
+    })
+
+    const htmlContent =
+        completion.choices[0].message.content
+
+    const cleanedHtml = htmlContent
+        .replace(/```html/g, "")
+        .replace(/```/g, "")
+        .trim()
+
+    const pdfBuffer =
+        await generatePdfFromHtml(cleanedHtml)
+
+    return pdfBuffer
 }
 
-module.exports = { generateInterviewReport, generateResumePdf };
+module.exports = {
+    generateInterviewReport,
+    generateResumePdf,
+}
