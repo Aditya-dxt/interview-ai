@@ -1,10 +1,9 @@
 const OpenAI = require("openai")
-const PDFDocument = require("pdfkit")
 
 const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: process.env.OPENROUTER_API_KEY
 })
-
 
 
 /**
@@ -50,7 +49,7 @@ ${jobDescription}
 `
 
     const completion = await client.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: "deepseek/deepseek-chat-v3-0324:free",
         messages: [
             {
                 role: "user",
@@ -99,7 +98,7 @@ Return the resume in clean professional plain text format.
 `
 
             const completion = await client.chat.completions.create({
-                model: "gpt-4.1-mini",
+                model: "deepseek/deepseek-chat-v3-0324:free",
                 messages: [
                     {
                         role: "user",
