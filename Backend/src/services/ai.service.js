@@ -51,7 +51,7 @@ async function generateInterviewReport({
     const prompt = `
 You are an expert technical interviewer and career coach.
 
-Analyze the following candidate profile carefully.
+Analyze this candidate carefully.
 
 Resume:
 ${resume}
@@ -62,26 +62,45 @@ ${selfDescription}
 Job Description:
 ${jobDescription}
 
-Generate:
+Return ONLY valid JSON in this exact format:
 
-1. Match Score (0-100)
-2. Technical Questions with:
-   - question
-   - intention
-   - answer
-3. Behavioral Questions with:
-   - question
-   - intention
-   - answer
-4. Skill Gaps with severity
-5. 4-day preparation roadmap
-6. Job title
+{
+  "title": "Frontend Developer",
+  "matchScore": 95,
+  "technicalQuestions": [
+    {
+      "question": "",
+      "intention": "",
+      "answer": ""
+    }
+  ],
+  "behavioralQuestions": [
+    {
+      "question": "",
+      "intention": "",
+      "answer": ""
+    }
+  ],
+  "skillGaps": [
+    {
+      "skill": "",
+      "severity": "low"
+    }
+  ],
+  "preparationPlan": [
+    {
+      "day": 1,
+      "focus": "",
+      "tasks": [""]
+    }
+  ]
+}
 
 IMPORTANT:
-Return ONLY valid JSON.
-No markdown.
-No explanation.
-No extra text.
+- Response must be ONLY JSON
+- Do not wrap in markdown
+- Do not skip title
+- title is REQUIRED
 `
 
     const completion = await groq.chat.completions.create({
