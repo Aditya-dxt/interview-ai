@@ -97,10 +97,10 @@ ${jobDescription || "Not provided"}
 `
 
     const models = [
-        "google/gemma-3-27b-it:free",
-        "mistralai/mistral-small-3.1-24b-instruct:free",
-        "meta-llama/llama-3.1-8b-instruct:free"
-    ]
+    "mistralai/mistral-7b-instruct:free",
+    "google/gemma-2-9b-it:free",
+    "openchat/openchat-7b:free"
+]
 
     let completion = null
     let lastError = null
@@ -143,6 +143,25 @@ ${jobDescription || "Not provided"}
     const response = completion.choices[0].message.content
 
     let parsedData = JSON.parse(response)
+
+    completion = await Promise.race([
+    client.chat.completions.create({
+        model,
+        messages: [
+            {
+                role: "user",
+                content: prompt
+            }
+        ],
+        temperature: 0.7,
+        response_format: {
+            type: "json_object"
+        }
+    }),
+    new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), 25000)
+    )
+])
 
     // fallback values
     parsedData.title = parsedData.title || "Software Developer"
