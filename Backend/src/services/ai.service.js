@@ -49,7 +49,7 @@ ${jobDescription}
 `
 
     const completion = await client.chat.completions.create({
-        model: "deepseek/deepseek-chat-v3-0324:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         messages: [
             {
                 role: "user",
@@ -98,7 +98,7 @@ Return the resume in clean professional plain text format.
 `
 
             const completion = await client.chat.completions.create({
-                model: "deepseek/deepseek-chat-v3-0324:free",
+                model: "meta-llama/llama-3.3-70b-instruct:free",
                 messages: [
                     {
                         role: "user",
