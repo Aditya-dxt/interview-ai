@@ -31,24 +31,24 @@ const Home = () => {
   };
 
   if (loading) {
-  return (
-    <main className="interview-loading">
-      <div className="loader-card">
-        <div className="loader-ring"></div>
+    return (
+      <main className="interview-loading">
+        <div className="loader-card">
+          <div className="loader-ring"></div>
 
-        <h1>Generating Your AI Interview Plan</h1>
+          <h1>Generating Your AI Interview Plan</h1>
 
-        <p>
-          Analyzing your profile, technical stack, and role requirements...
-        </p>
+          <p>
+            Analyzing your profile, technical stack, and role requirements...
+          </p>
 
-        <div className="loader-progress">
-          <span></span>
+          <div className="loader-progress">
+            <span></span>
+          </div>
         </div>
-      </div>
-    </main>
-  );
-}
+      </main>
+    );
+  }
 
   return (
     <div className="home-page">
@@ -61,6 +61,12 @@ const Home = () => {
           Let our AI analyze the job requirements and your unique profile to
           build a winning strategy.
         </p>
+        <div className="hero-pills">
+          <span>AI Resume Analysis</span>
+          <span>Technical Questions</span>
+          <span>Behavioral Preparation</span>
+          <span>Personalized Roadmaps</span>
+        </div>
       </header>
 
       {/* Main Card */}
