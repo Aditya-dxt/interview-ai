@@ -156,14 +156,6 @@ const Interview = () => {
 
   return (
     <div className="interview-page">
-      <header className="topbar">
-        <div className="topbar__logo">
-          <img src="/brain.png" alt="logo" />
-          <span>Interview AI</span>
-        </div>
-
-        <div className="topbar__status">AI Powered Interview Assistant</div>
-      </header>
       <div className="interview-layout">
         {/* ── Left Nav ── */}
         <nav className="interview-nav">
