@@ -154,6 +154,27 @@ const Interview = () => {
         ? "score--mid"
         : "score--low";
 
+
+  if (loading) {
+    return (
+      <main className="interview-loading">
+        <div className="loader-card">
+          <div className="loader-ring"></div>
+
+          <h1>Generating Your AI Interview Plan</h1>
+
+          <p>
+            Analyzing your profile, technical stack, and role requirements...
+          </p>
+
+          <div className="loader-progress">
+            <span></span>
+          </div>
+        </div>
+      </main>
+    );
+  }
+  
   return (
     <div className="interview-page">
       <div className="interview-layout">
