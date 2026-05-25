@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://interview-ai-eta-one.vercel.app",
+    baseURL: "https://interview-ai-lc0s.onrender.com",
     withCredentials: true,
 })
 
