@@ -1,14 +1,11 @@
 const OpenAI = require("openai")
+const PDFDocument = require("pdfkit")
 
 const client = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY
 })
 
-
-/**
- * Generate Interview Report
- */
 async function generateInterviewReport({
     resume,
     selfDescription,
@@ -16,91 +13,59 @@ async function generateInterviewReport({
 }) {
 
     const prompt = `
-You are an expert AI interview coach and senior technical recruiter.
+You are an expert AI interview coach.
 
-Analyze the candidate profile carefully and generate a COMPLETE interview preparation report.
+Analyze the candidate profile and generate a professional interview preparation report.
 
-IMPORTANT INSTRUCTIONS:
-- Return ONLY valid JSON
-- Do NOT add markdown
-- Do NOT add explanation text
-- Generate realistic and high-quality answers
-- Questions should match the job description
-- Model answers should be practical and interview-ready
-- Roadmap should be detailed and actionable
+Return ONLY valid JSON.
 
-JSON FORMAT:
-
+JSON Structure:
 {
-  "title": "string",
-  "matchScore": number,
-  "technicalQuestions": [
-    {
-      "question": "string",
-      "intention": "string",
-      "modelAnswer": "string"
-    }
-  ],
-  "behavioralQuestions": [
-    {
-      "question": "string",
-      "intention": "string",
-      "modelAnswer": "string"
-    }
-  ],
-  "skillGaps": ["string"],
-  "preparationPlan": [
-    {
-      "day": "Day 1",
-      "title": "string",
-      "topics": ["string"]
-    }
-  ]
+  "title": "",
+  "matchScore": 0,
+  "technicalQuestions": [],
+  "behavioralQuestions": [],
+  "skillGaps": [],
+  "preparationPlan": []
 }
 
-REQUIREMENTS:
+Requirements:
 
-1. Generate a professional job title
+1. Generate professional job title
 
-2. Generate a realistic match score between 0-100
+2. Match score between 0-100
 
-3. Generate 5 HIGH-QUALITY technical interview questions:
-- Relevant to the job role
-- Include frontend/backend/system design concepts if needed
-- Include detailed practical answers
-- Answers should sound like strong interview responses
+3. Generate 5 technical interview questions:
+- question
+- intention
+- modelAnswer
 
-4. Generate 5 HIGH-QUALITY behavioral interview questions:
-- Use STAR method style answers
-- Professional and realistic
-- Include teamwork, leadership, debugging, communication, ownership, problem solving
+4. Generate 5 behavioral interview questions:
+- question
+- intention
+- modelAnswer
 
-5. Generate 5-7 skill gaps:
-- Short
-- Relevant
-- Practical
+5. Generate 5 realistic skill gaps
 
-6. Generate a DETAILED 7-day preparation roadmap:
-- Each day must contain:
-  - title
-  - 3-5 practical preparation topics
-- Make roadmap actionable and realistic
+6. Generate 3-day preparation roadmap:
+- day
+- title
+- topics
 
-Candidate Resume:
-${resume || "Not provided"}
+Resume:
+${resume}
 
 Self Description:
-${selfDescription || "Not provided"}
+${selfDescription}
 
 Job Description:
-${jobDescription || "Not provided"}
+${jobDescription}
 `
 
     const models = [
-    "mistralai/mistral-7b-instruct:free",
-    "google/gemma-2-9b-it:free",
-    "openchat/openchat-7b:free"
-]
+        "google/gemma-2-9b-it:free",
+        "mistralai/mistral-7b-instruct:free"
+    ]
 
     let completion = null
     let lastError = null
@@ -109,27 +74,35 @@ ${jobDescription || "Not provided"}
 
         try {
 
-            completion = await client.chat.completions.create({
-                model,
-                messages: [
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
-                temperature: 0.7,
-                response_format: {
-                    type: "json_object"
-                }
-            })
+            completion = await Promise.race([
 
-            console.log(`Using model: ${model}`)
+                client.chat.completions.create({
+                    model,
+                    messages: [
+                        {
+                            role: "user",
+                            content: prompt
+                        }
+                    ],
+                    temperature: 0.7,
+                    response_format: {
+                        type: "json_object"
+                    }
+                }),
+
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Timeout")), 25000)
+                )
+
+            ])
+
+            console.log("Using model:", model)
 
             break
 
         } catch (error) {
 
-            console.log(`Model failed: ${model}`)
+            console.log("Model failed:", model)
             console.log(error.message)
 
             lastError = error
@@ -142,114 +115,69 @@ ${jobDescription || "Not provided"}
 
     const response = completion.choices[0].message.content
 
-    let parsedData = JSON.parse(response)
+    const parsedData = JSON.parse(response)
 
-    completion = await Promise.race([
-    client.chat.completions.create({
-        model,
-        messages: [
-            {
-                role: "user",
-                content: prompt
-            }
-        ],
-        temperature: 0.7,
-        response_format: {
-            type: "json_object"
-        }
-    }),
-    new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Request timeout")), 25000)
-    )
-])
-
-    // fallback values
-    parsedData.title = parsedData.title || "Software Developer"
-    parsedData.matchScore = parsedData.matchScore || 75
-    parsedData.technicalQuestions = parsedData.technicalQuestions || []
-    parsedData.behavioralQuestions = parsedData.behavioralQuestions || []
-    parsedData.skillGaps = parsedData.skillGaps || []
-    parsedData.preparationPlan = parsedData.preparationPlan || []
-
-    return parsedData
+    return {
+        title: parsedData.title || "Software Developer",
+        matchScore: parsedData.matchScore || 75,
+        technicalQuestions: parsedData.technicalQuestions || [],
+        behavioralQuestions: parsedData.behavioralQuestions || [],
+        skillGaps: parsedData.skillGaps || [],
+        preparationPlan: parsedData.preparationPlan || []
+    }
 }
 
-
-/**
- * Generate Resume PDF
- */
 async function generateResumePdf({
     resume,
     selfDescription,
     jobDescription
 }) {
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
-        try {
+        const doc = new PDFDocument()
 
-            const prompt = `
-Create a professional ATS optimized resume using:
+        const buffers = []
 
-Resume:
-${resume}
+        doc.on("data", buffers.push.bind(buffers))
 
-Self Description:
-${selfDescription}
+        doc.on("end", () => {
 
-Job Description:
-${jobDescription}
+            const pdfData = Buffer.concat(buffers)
 
-Return the resume in clean professional plain text format.
-`
+            resolve(pdfData)
+        })
 
-            const completion = await client.chat.completions.create({
-                model: "meta-llama/llama-3.3-70b-instruct:free",
-                messages: [
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
-                temperature: 0.5
-            })
+        doc.fontSize(24).text("AI Optimized Resume", {
+            align: "center"
+        })
 
-            const generatedResume =
-                completion.choices[0].message.content
+        doc.moveDown()
 
-            const doc = new PDFDocument({
-                margin: 50
-            })
+        doc.fontSize(18).text("Professional Summary")
 
-            const buffers = []
+        doc.moveDown()
 
-            doc.on("data", buffers.push.bind(buffers))
+        doc.fontSize(12).text(selfDescription || "No self description provided")
 
-            doc.on("end", () => {
-                const pdfData = Buffer.concat(buffers)
-                resolve(pdfData)
-            })
+        doc.moveDown()
 
-            doc
-                .fontSize(20)
-                .text("Professional Resume", {
-                    align: "center"
-                })
+        doc.fontSize(18).text("Resume Content")
 
-            doc.moveDown()
+        doc.moveDown()
 
-            doc
-                .fontSize(12)
-                .text(generatedResume)
+        doc.fontSize(12).text(resume || "No resume content")
 
-            doc.end()
+        doc.moveDown()
 
-        } catch (error) {
-            reject(error)
-        }
+        doc.fontSize(18).text("Target Job Description")
 
+        doc.moveDown()
+
+        doc.fontSize(12).text(jobDescription || "No job description")
+
+        doc.end()
     })
-
 }
 
 module.exports = {
