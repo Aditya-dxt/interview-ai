@@ -1,9 +1,10 @@
-const OpenAI = require("openai")
+const { GoogleGenerativeAI } = require("@google/generative-ai")
 const PDFDocument = require("pdfkit")
 
-const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: process.env.OPENROUTER_API_KEY
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+
+const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash"
 })
 
 async function generateInterviewReport({
@@ -13,46 +14,72 @@ async function generateInterviewReport({
 }) {
 
     const prompt = `
-You are an expert AI interview coach.
+You are an expert AI interview coach and senior technical recruiter.
 
-Analyze the candidate profile and generate a professional interview preparation report.
+Analyze the candidate profile and generate a COMPLETE professional interview preparation report.
 
-Return ONLY valid JSON.
+IMPORTANT:
+- Return ONLY valid JSON
+- No markdown
+- No explanation text
+- No triple backticks
 
-JSON Structure:
+JSON FORMAT:
+
 {
   "title": "",
   "matchScore": 0,
-  "technicalQuestions": [],
-  "behavioralQuestions": [],
+  "technicalQuestions": [
+    {
+      "question": "",
+      "intention": "",
+      "modelAnswer": ""
+    }
+  ],
+  "behavioralQuestions": [
+    {
+      "question": "",
+      "intention": "",
+      "modelAnswer": ""
+    }
+  ],
   "skillGaps": [],
-  "preparationPlan": []
+  "preparationPlan": [
+    {
+      "day": "",
+      "title": "",
+      "topics": []
+    }
+  ]
 }
 
-Requirements:
+REQUIREMENTS:
 
-1. Generate professional job title
+1. Generate realistic professional job title
 
-2. Match score between 0-100
+2. Generate match score from 0-100
 
-3. Generate 5 technical interview questions:
-- question
-- intention
-- modelAnswer
+3. Generate 8 HIGH QUALITY technical interview questions:
+- role specific
+- practical
+- detailed model answers
 
-4. Generate 5 behavioral interview questions:
-- question
-- intention
-- modelAnswer
+4. Generate 8 behavioral interview questions:
+- STAR format style answers
+- leadership
+- teamwork
+- debugging
+- ownership
+- communication
 
-5. Generate 5 realistic skill gaps
+5. Generate 6 realistic skill gaps
 
-6. Generate 3-day preparation roadmap:
+6. Generate DETAILED 7-day roadmap:
 - day
 - title
-- topics
+- 4-5 preparation topics
 
-Resume:
+Candidate Resume:
 ${resume}
 
 Self Description:
@@ -62,68 +89,35 @@ Job Description:
 ${jobDescription}
 `
 
-    const models = [
-        "google/gemma-2-9b-it:free",
-        "mistralai/mistral-7b-instruct:free"
-    ]
+    try {
 
-    let completion = null
-    let lastError = null
+        const result = await model.generateContent(prompt)
 
-    for (const model of models) {
+        const response = await result.response
 
-        try {
+        const text = response.text()
 
-            completion = await Promise.race([
+        const cleanedText = text
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .trim()
 
-                client.chat.completions.create({
-                    model,
-                    messages: [
-                        {
-                            role: "user",
-                            content: prompt
-                        }
-                    ],
-                    temperature: 0.7,
-                    response_format: {
-                        type: "json_object"
-                    }
-                }),
+        const parsedData = JSON.parse(cleanedText)
 
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Timeout")), 25000)
-                )
-
-            ])
-
-            console.log("Using model:", model)
-
-            break
-
-        } catch (error) {
-
-            console.log("Model failed:", model)
-            console.log(error.message)
-
-            lastError = error
+        return {
+            title: parsedData.title || "Software Developer",
+            matchScore: parsedData.matchScore || 75,
+            technicalQuestions: parsedData.technicalQuestions || [],
+            behavioralQuestions: parsedData.behavioralQuestions || [],
+            skillGaps: parsedData.skillGaps || [],
+            preparationPlan: parsedData.preparationPlan || []
         }
-    }
 
-    if (!completion) {
-        throw lastError
-    }
+    } catch (error) {
 
-    const response = completion.choices[0].message.content
+        console.log("Gemini Error:", error)
 
-    const parsedData = JSON.parse(response)
-
-    return {
-        title: parsedData.title || "Software Developer",
-        matchScore: parsedData.matchScore || 75,
-        technicalQuestions: parsedData.technicalQuestions || [],
-        behavioralQuestions: parsedData.behavioralQuestions || [],
-        skillGaps: parsedData.skillGaps || [],
-        preparationPlan: parsedData.preparationPlan || []
+        throw new Error("Failed to generate interview report")
     }
 }
 
@@ -135,7 +129,9 @@ async function generateResumePdf({
 
     return new Promise((resolve, reject) => {
 
-        const doc = new PDFDocument()
+        const doc = new PDFDocument({
+            margin: 50
+        })
 
         const buffers = []
 
@@ -148,33 +144,58 @@ async function generateResumePdf({
             resolve(pdfData)
         })
 
-        doc.fontSize(24).text("AI Optimized Resume", {
-            align: "center"
-        })
+        // HEADER
+        doc
+            .fontSize(26)
+            .fillColor("#2563eb")
+            .text("AI Optimized Resume", {
+                align: "center"
+            })
+
+        doc.moveDown(2)
+
+        // SUMMARY
+        doc
+            .fontSize(18)
+            .fillColor("black")
+            .text("Professional Summary")
 
         doc.moveDown()
 
-        doc.fontSize(18).text("Professional Summary")
+        doc
+            .fontSize(12)
+            .fillColor("#444")
+            .text(selfDescription || "No summary provided")
+
+        doc.moveDown(2)
+
+        // RESUME CONTENT
+        doc
+            .fontSize(18)
+            .fillColor("black")
+            .text("Resume Content")
 
         doc.moveDown()
 
-        doc.fontSize(12).text(selfDescription || "No self description provided")
+        doc
+            .fontSize(12)
+            .fillColor("#444")
+            .text(resume || "No resume content")
+
+        doc.moveDown(2)
+
+        // JOB DESCRIPTION
+        doc
+            .fontSize(18)
+            .fillColor("black")
+            .text("Target Job Description")
 
         doc.moveDown()
 
-        doc.fontSize(18).text("Resume Content")
-
-        doc.moveDown()
-
-        doc.fontSize(12).text(resume || "No resume content")
-
-        doc.moveDown()
-
-        doc.fontSize(18).text("Target Job Description")
-
-        doc.moveDown()
-
-        doc.fontSize(12).text(jobDescription || "No job description")
+        doc
+            .fontSize(12)
+            .fillColor("#444")
+            .text(jobDescription || "No job description")
 
         doc.end()
     })
