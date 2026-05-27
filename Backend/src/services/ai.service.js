@@ -4,7 +4,7 @@ const PDFDocument = require("pdfkit")
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
 const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash"
+     model: "gemini-1.5-flash-latest"
 })
 
 async function generateInterviewReport({
