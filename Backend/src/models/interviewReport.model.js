@@ -13,6 +13,10 @@ const technicalQuestionSchema = new mongoose.Schema({
     answer: {
         type: String,
         required: [ true, "Answer is required" ]
+    },
+    difficulty: {
+        type: String,
+        enum: [ 'easy', 'medium', 'hard' ]
     }
 }, {
     _id: false
@@ -30,6 +34,9 @@ const behavioralQuestionSchema = new mongoose.Schema({
     answer: {
         type: String,
         required: [ true, "Answer is required" ]
+    },
+    category: {
+        type: String
     }
 }, {
     _id: false
@@ -44,6 +51,12 @@ const skillGapSchema = new mongoose.Schema({
         type: String,
         enum: [ "low", "medium", "high" ],
         required: [ true, "Severity is required" ]
+    },
+    description: {
+        type: String
+    },
+    recommendation: {
+        type: String
     }
 }, {
     _id: false
@@ -91,6 +104,11 @@ const interviewReportSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [ true, "Job title is required" ]
+    },
+    aiProvider: {
+        type: String,
+        enum: [ 'gemini', 'openai', 'local' ],
+        default: 'gemini'
     }
 }, {
     timestamps: true

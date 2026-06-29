@@ -62,16 +62,43 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    id: "skillgaps",
+    label: "Skill Gaps",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    ),
+  },
 ];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-const QuestionCard = ({ item, index }) => {
+const QuestionCard = ({ item, index, type }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="q-card">
       <div className="q-card__header" onClick={() => setOpen((o) => !o)}>
         <span className="q-card__index">Q{index + 1}</span>
         <p className="q-card__question">{item.question}</p>
+        {type === "technical" && item.difficulty && (
+          <span className={`q-card__difficulty q-card__difficulty--${item.difficulty}`}>
+            {item.difficulty}
+          </span>
+        )}
+        {type === "behavioral" && item.category && (
+          <span className="q-card__category">{item.category}</span>
+        )}
         <span
           className={`q-card__chevron ${open ? "q-card__chevron--open" : ""}`}
         >
@@ -98,10 +125,32 @@ const QuestionCard = ({ item, index }) => {
             </span>
             <p>{item.intention}</p>
           </div>
-          <div className="q-card__section">
-            <span className="q-card__tag q-card__tag--answer">
-              Model Answer
-            </span>
+          <div className="q-card__section q-card__section--answer">
+            <div className="q-card__section-header">
+              <span className="q-card__tag q-card__tag--answer">
+                Model Answer
+              </span>
+              <button
+                className="copy-btn"
+                onClick={() => navigator.clipboard.writeText(item.answer)}
+                title="Copy answer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
+            </div>
             <p>{item.answer}</p>
           </div>
         </div>
@@ -124,6 +173,27 @@ const RoadMapDay = ({ day }) => (
         </li>
       ))}
     </ul>
+  </div>
+);
+
+const SkillGapCard = ({ gap, index }) => (
+  <div className={`gap-card gap-card--${gap.severity}`}>
+    <div className="gap-card__header">
+      <span className="gap-card__index">{index + 1}</span>
+      <h3 className="gap-card__skill">{gap.skill}</h3>
+      <span className={`gap-card__severity gap-card__severity--${gap.severity}`}>
+        {gap.severity}
+      </span>
+    </div>
+    {gap.description && (
+      <p className="gap-card__description">{gap.description}</p>
+    )}
+    {gap.recommendation && (
+      <div className="gap-card__recommendation">
+        <span className="gap-card__rec-label">💡 Recommendation</span>
+        <p>{gap.recommendation}</p>
+      </div>
+    )}
   </div>
 );
 
@@ -218,7 +288,7 @@ const Interview = () => {
               </div>
               <div className="q-list">
                 {report.technicalQuestions.map((q, i) => (
-                  <QuestionCard key={i} item={q} index={i} />
+                  <QuestionCard key={i} item={q} index={i} type="technical" />
                 ))}
               </div>
             </section>
@@ -234,7 +304,7 @@ const Interview = () => {
               </div>
               <div className="q-list">
                 {report.behavioralQuestions.map((q, i) => (
-                  <QuestionCard key={i} item={q} index={i} />
+                  <QuestionCard key={i} item={q} index={i} type="behavioral" />
                 ))}
               </div>
             </section>
@@ -255,6 +325,22 @@ const Interview = () => {
               </div>
             </section>
           )}
+
+          {activeNav === "skillgaps" && (
+            <section>
+              <div className="content-header">
+                <h2>Skill Gap Analysis</h2>
+                <span className="content-header__count">
+                  {report.skillGaps.length} gaps identified
+                </span>
+              </div>
+              <div className="gap-list">
+                {report.skillGaps.map((gap, i) => (
+                  <SkillGapCard key={i} gap={gap} index={i} />
+                ))}
+              </div>
+            </section>
+          )}
         </main>
 
         <div className="interview-divider" />
@@ -268,7 +354,9 @@ const Interview = () => {
               <span className="match-score__value">{report.matchScore}</span>
               <span className="match-score__pct">%</span>
             </div>
-            <p className="match-score__sub">Strong match for this role</p>
+            <p className="match-score__sub">
+              {report.matchScore >= 80 ? "Strong match for this role" : report.matchScore >= 60 ? "Good match for this role" : report.matchScore >= 40 ? "Moderate match for this role" : "Low match for this role"}
+            </p>
           </div>
 
           <div className="sidebar-divider" />
@@ -287,6 +375,22 @@ const Interview = () => {
               ))}
             </div>
           </div>
+
+          {/* AI Provider Badge */}
+          {report.aiProvider && (
+            <>
+              <div className="sidebar-divider" />
+              <div className="ai-provider">
+                <p className="ai-provider__label">Generated By</p>
+                <div className={`ai-provider__badge ai-provider__badge--${report.aiProvider}`}>
+                  <span className="ai-provider__icon">
+                    {report.aiProvider === 'gemini' ? '✦' : report.aiProvider === 'openai' ? '◈' : '⚡'}
+                  </span>
+                  <span>{report.aiProvider === 'gemini' ? 'Google Gemini' : report.aiProvider === 'openai' ? 'OpenAI GPT' : 'Local Engine'}</span>
+                </div>
+              </div>
+            </>
+          )}
         </aside>
       </div>
     </div>

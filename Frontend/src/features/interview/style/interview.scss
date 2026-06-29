@@ -616,6 +616,237 @@ $severity-low: #3fb950;
   }
 }
 
+// ── Difficulty Badge ──────────────────────────────────────────────────────────
+.q-card__difficulty {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+  
+  &--easy {
+    color: #3fb950;
+    background: rgba(63, 185, 80, 0.1);
+    border: 1px solid rgba(63, 185, 80, 0.2);
+  }
+  &--medium {
+    color: #f5a623;
+    background: rgba(245, 166, 35, 0.1);
+    border: 1px solid rgba(245, 166, 35, 0.2);
+  }
+  &--hard {
+    color: #ff4d4d;
+    background: rgba(255, 77, 77, 0.1);
+    border: 1px solid rgba(255, 77, 77, 0.2);
+  }
+}
+
+// ── Category Badge ────────────────────────────────────────────────────────────
+.q-card__category {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.25rem;
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+// ── Copy Button ───────────────────────────────────────────────────────────────
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.35rem;
+  padding: 0.35rem;
+  cursor: pointer;
+  color: $text-muted;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  
+  &:hover {
+    color: $accent;
+    background: rgba($accent, 0.08);
+    border-color: rgba($accent, 0.2);
+    transform: scale(1.1);
+  }
+  
+  svg { width: 14px; height: 14px; }
+}
+
+// ── Skill Gap Cards ───────────────────────────────────────────────────────────
+.gap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gap-card {
+  background: $bg-panel;
+  border: 1px solid $border-color;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  backdrop-filter: blur(14px);
+  transition: all 0.25s ease;
+  border-left: 3px solid transparent;
+  
+  &--high { border-left-color: $severity-high; }
+  &--medium { border-left-color: $severity-medium; }
+  &--low { border-left-color: $severity-low; }
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 18px rgba($accent, 0.06);
+  }
+  
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  &__index {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: $accent;
+    background: rgba($accent, 0.1);
+    border: 1px solid rgba($accent, 0.2);
+    border-radius: 0.3rem;
+    padding: 0.15rem 0.4rem;
+    flex-shrink: 0;
+  }
+  
+  &__skill {
+    flex: 1;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: $text-primary;
+  }
+  
+  &__severity {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    
+    &--high {
+      color: $severity-high;
+      background: rgba($severity-high, 0.1);
+      border: 1px solid rgba($severity-high, 0.25);
+    }
+    &--medium {
+      color: $severity-medium;
+      background: rgba($severity-medium, 0.1);
+      border: 1px solid rgba($severity-medium, 0.25);
+    }
+    &--low {
+      color: $severity-low;
+      background: rgba($severity-low, 0.1);
+      border: 1px solid rgba($severity-low, 0.25);
+    }
+  }
+  
+  &__description {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: lighten($text-muted, 15%);
+    line-height: 1.6;
+  }
+  
+  &__recommendation {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  &__rec-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #f5a623;
+    margin-bottom: 0.35rem;
+    display: block;
+  }
+  
+  &__recommendation p {
+    margin: 0;
+    font-size: 0.835rem;
+    color: lighten($text-muted, 15%);
+    line-height: 1.6;
+  }
+}
+
+// ── AI Provider Badge (Sidebar) ───────────────────────────────────────────────
+.ai-provider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $text-muted;
+    margin: 0;
+  }
+  
+  &__badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    
+    &--gemini {
+      color: #4285f4;
+      background: rgba(66, 133, 244, 0.1);
+      border: 1px solid rgba(66, 133, 244, 0.2);
+    }
+    &--openai {
+      color: #10a37f;
+      background: rgba(16, 163, 127, 0.1);
+      border: 1px solid rgba(16, 163, 127, 0.2);
+    }
+    &--local {
+      color: #f5a623;
+      background: rgba(245, 166, 35, 0.1);
+      border: 1px solid rgba(245, 166, 35, 0.2);
+    }
+  }
+  
+  &__icon {
+    font-size: 1rem;
+  }
+}
+
+// ── Answer section with copy btn ──────────────────────────────────────────────
+.q-card__section--answer {
+  .q-card__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+}
+
 @media (max-width: 1100px) {
 
   .interview-layout{

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router";
+import "../auth.form.scss";
 import { useAuth } from "../hooks/useAuth";
+import { motion } from "framer-motion";
 
 const Register = () => {
   const navigate = useNavigate();

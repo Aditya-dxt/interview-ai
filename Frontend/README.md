@@ -1,16 +1,73 @@
-# React + Vite
+# Interview AI — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite single-page application for the Interview AI platform.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** with React Router 7
+- **Vite 7** for development and builds
+- **SCSS** for premium dark-mode styling
+- **Axios** for API communication
+- **Framer Motion** for animations
 
-## React Compiler
+## Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+src/
+├── main.jsx                    # Entry point
+├── App.jsx                     # Context providers + RouterProvider
+├── app.routes.jsx              # Route definitions
+├── style.scss                  # Global styles
+├── style/
+│   └── button.scss             # Shared button component
+└── features/
+    ├── auth/                   # Authentication
+    │   ├── auth.context.jsx    # Auth state context
+    │   ├── auth.form.scss      # Login/Register form styles
+    │   ├── components/
+    │   │   └── Protected.jsx   # Route guard
+    │   ├── hooks/
+    │   ├── pages/
+    │   │   ├── Login.jsx
+    │   │   └── Register.jsx
+    │   └── services/
+    │
+    └── interview/              # Interview reports
+        ├── interview.context.jsx   # Interview state + error context
+        ├── hooks/
+        │   └── useInterview.js     # Interview operations hook
+        ├── pages/
+        │   ├── Home.jsx            # Report generator + recent reports list
+        │   └── Interview.jsx       # Report viewer (4-section tabbed nav)
+        ├── services/
+        │   └── interview.api.js    # Axios API service
+        └── style/
+            ├── home.scss           # Home page styles
+            └── interview.scss      # Report page styles
+```
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+Output: `dist/`
+
+## Configuration
+
+Update the API base URL in `src/features/interview/services/interview.api.js`:
+
+```js
+const api = axios.create({
+    baseURL: "http://localhost:3000",  // Backend URL
+    withCredentials: true,
+})
+```
